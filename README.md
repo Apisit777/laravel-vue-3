@@ -75,3 +75,11 @@ php artisan serve
 npm install
 
 composer update
+
+git init
+git add .
+git commit -m "first commit"
+git remote -v
+git remote add origin ตามด้วย -> htpp
+git push --all origin
+git status
