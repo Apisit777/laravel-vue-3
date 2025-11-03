@@ -204,6 +204,92 @@ function clearCurrentTableOrders() {
                 </div> -->
             </div>
 
+            <div class="grid gap-4 gap-y-2 text-sm grid-cols-1 md:grid-cols-6">
+                <div class="md:col-span-3">
+                    <label for="txt_table" class="block text-sm mb-1">จังหวัง</label>
+                    <Select 
+                        v-model="txtTable" 
+                        :options="tables" 
+                        filter 
+                        optionLabel="label"
+                        optionValue="value" 
+                        placeholder="--- กรุณาเลือก ---" 
+                        class="w-full"
+                        :pt="{
+                            root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
+                            trigger: { class: 'h-8 px-2' },
+                            label:   { class: 'text-sm leading-none px-2' },
+                            panel:   { class: 'bg-white dark:bg-[#232323] text-sm' },
+                            item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
+                        }"
+                    >
+                        
+                        <template #option="slotProps">
+                            <div class="flex items-center">
+                                <div>{{ slotProps.option.label }}</div>
+                            </div>
+                        </template>
+                    </Select>
+                </div>
+                <div class="md:col-span-3" >
+                    <label for="txt_table" class="block text-sm mb-1">อำเภอ</label>
+                    <Select 
+                        v-model="txtTable" 
+                        :options="tables" 
+                        filter 
+                        optionLabel="label"
+                        optionValue="value" 
+                        placeholder="--- กรุณาเลือก ---" 
+                        class="w-full"
+                        :pt="{
+                            root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
+                            trigger: { class: 'h-8 px-2' },
+                            label:   { class: 'text-sm leading-none px-2' },
+                            panel:   { class: 'bg-white dark:bg-[#232323] text-sm' },
+                            item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
+                        }"
+                    >
+                        
+                        <template #option="slotProps">
+                            <div class="flex items-center">
+                                <div>{{ slotProps.option.label }}</div>
+                            </div>
+                        </template>
+                    </Select>
+                </div>
+                <div class="md:col-span-3" >
+                    <label for="txt_table" class="block text-sm mb-1">ตำบล</label>
+                    <Select 
+                        v-model="txtTable" 
+                        :options="tables" 
+                        filter 
+                        optionLabel="label"
+                        optionValue="value" 
+                        placeholder="--- กรุณาเลือก ---" 
+                        class="w-full"
+                        :pt="{
+                            root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
+                            trigger: { class: 'h-8 px-2' },
+                            label:   { class: 'text-sm leading-none px-2' },
+                            panel:   { class: 'bg-white dark:bg-[#232323] text-sm' },
+                            item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
+                        }"
+                    >
+                        
+                        <template #option="slotProps">
+                            <div class="flex items-center">
+                                <div>{{ slotProps.option.label }}</div>
+                            </div>
+                        </template>
+                    </Select>
+                </div>
+
+                <div class="md:col-span-3">
+                    <label for="">รหัสไปรษณีย์</label>
+                    <input type="text" name="" id="" class="h-9 border-[#303030] dark:border focus:border-blue-500 mt-1 rounded-sm px-4 w-full bg-gray-50 dark:bg-[#303030] text-center" />
+                </div>
+            </div>
+
             <div class="justify-center items-center">
                 <div class="mt-5 flex justify-items-start">
                     <p class="inline-block space-y-2 border-b border-gray-200 dark:border-gray-700 text-xl font-bold text-gray-900 dark:text-gray-100">Customer Order</p>
