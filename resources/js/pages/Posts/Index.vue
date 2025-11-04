@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 
 // import Vue3Select from 'vue3-select';
 import 'vue3-select/dist/vue3-select.css';
@@ -166,6 +166,117 @@ function clearCurrentTableOrders() {
   tableSummary.value;
 }
 
+// --- state ---
+const brand_id = ref("");
+const model_id = ref("");
+const submodel_id = ref("");
+
+const carbrandlist = ref<any[]>([]);
+const carmodellist = ref<any[]>([]);
+const carsubmodellist = ref<any[]>([]);
+
+// --- methods ---
+async function getCarBrands() {
+  try {
+    const response = await fetch("https://crm.wsmart.co.th/api/car/brand");
+    if (!response.ok) throw new Error("API Error");
+
+    const data = await response.json();
+    carbrandlist.value = data;
+  } catch (error) {
+    console.error("⚠️ getCarBrands(): ใช้ Mock Data เพราะ API Error");
+    carbrandlist.value = [
+      { id: 1, name: "Audi" },
+      { id: 2, name: "Benz" },
+      { id: 3, name: "BMW" },
+      { id: 4, name: "Honda" },
+      { id: 5, name: "Mazda" },
+      { id: 6, name: "MG" },
+      { id: 7, name: "Nissan" },
+      { id: 8, name: "Porsche" },
+      { id: 9, name: "Toyota" },
+      { id: 10, name: "Isuzu" },
+    ];
+  }
+}
+
+async function getCarModels() {
+  console.log("even", brand_id.value);
+
+  if (!brand_id.value) {
+    model_id.value = "";
+    carmodellist.value = [];
+    return;
+  }
+
+  try {
+    const response = await fetch(`https://crm.wsmart.co.th/api/car/model/${brand_id.value}`);
+    if (!response.ok) throw new Error("API Error");
+
+    const data = await response.json();
+    carmodellist.value = data;
+  } catch (error) {
+    console.error("⚠️ getCarModels(): ใช้ Mock Data เพราะ API Error");
+
+    const modelsByBrand: Record<number, string[]> = {
+      1: ["A1", "A3", "A4", "Q5", "Q7"],
+      2: ["C-Class", "E-Class", "GLA", "GLC"],
+      3: ["3 Series", "5 Series", "X1", "X3"],
+      4: ["Civic", "City", "Accord", "CR-V"],
+      5: ["Mazda2", "Mazda3", "CX-3", "CX-5"],
+      6: ["ZS", "Extender", "MG5"],
+      7: ["Almera", "Navara", "Terra"],
+      8: ["Cayenne", "Macan", "911"],
+      9: ["Yaris", "Altis", "Camry", "Fortuner"],
+      10: ["D-Max", "MU-X"],
+    };
+
+    carmodellist.value = (modelsByBrand[Number(brand_id.value)] || []).map((name, index) => ({
+      id: index + 1,
+      name,
+    }));
+  }
+}
+
+async function getCarSubModels() {
+  if (!model_id.value) {
+    submodel_id.value = "";
+    carsubmodellist.value = [];
+    return;
+  }
+
+  try {
+    const response = await fetch(`https://crm.wsmart.co.th/api/car/submodel/${model_id.value}`);
+    if (!response.ok) throw new Error("API Error");
+
+    const data = await response.json();
+    carsubmodellist.value = data;
+  } catch (error) {
+    console.error("⚠️ getCarSubModels(): ใช้ Mock Data เพราะ API Error");
+
+    carsubmodellist.value = [
+      { id: 1, name: "1.5 Turbo" },
+      { id: 2, name: "1.8 Hybrid" },
+      { id: 3, name: "2.0 Sport" },
+      { id: 4, name: "2.5 Premium" },
+    ];
+  }
+}
+
+// --- lifecycle ---
+onMounted(() => {
+  getCarBrands();
+});
+
+// --- watcher (โหลด model/submodel อัตโนมัติเมื่อเลือก brand/model) ---
+watch(brand_id, () => {
+  getCarModels();
+});
+
+watch(model_id, () => {
+  getCarSubModels();
+});
+
 </script>
 
 <template>
@@ -206,14 +317,133 @@ function clearCurrentTableOrders() {
 
             <div class="grid gap-4 gap-y-2 text-sm grid-cols-1 md:grid-cols-6">
                 <div class="md:col-span-3">
+                    <label for="brand" class="block text-sm mb-1">Brand</label>
+                    <Select
+                        v-model="brand_id"
+                        :options="[{ name: '--- กรุณาเลือก ---', id: '' }, ...carbrandlist]"
+                        filter
+                        optionLabel="name"
+                        optionValue="id"
+                        placeholder="--- กรุณาเลือก ---"
+                        class="w-full"
+                        @change="getCarModels"
+                        :pt="{
+                        root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
+                        trigger: { class: 'h-8 px-2' },
+                        label:   { class: 'text-sm leading-none px-2' },
+                        panel:   { class: 'bg-white dark:bg-[#232323] text-sm' },
+                        item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
+                        }"
+                    >
+                        <!-- ปรับแต่ง option -->
+                        <template #option="slotProps">
+                        <div
+                            :class="['flex items-center', slotProps.option.id === '' ? 'text-gray-400 italic' : '']"
+                        >
+                            {{ slotProps.option.name }}
+                        </div>
+                        </template>
+                    </Select>
+
+                </div>
+                <div class="md:col-span-3">
+                    <label for="">Model</label>
+                    <Select
+                        v-model="model_id"
+                        :options="[{ name: '--- กรุณาเลือก ---', id: '' }, ...carmodellist]"
+                        filter
+                        optionLabel="name"
+                        optionValue="id"
+                        placeholder="--- กรุณาเลือก ---"
+                        class="w-full"
+                        @change="getCarModels"
+                        :pt="{
+                        root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
+                        trigger: { class: 'h-8 px-2' },
+                        label:   { class: 'text-sm leading-none px-2' },
+                        panel:   { class: 'bg-white dark:bg-[#232323] text-sm' },
+                        item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
+                        }"
+                    >
+                        <!-- ปรับแต่ง option -->
+                        <template #option="slotProps">
+                        <div
+                            :class="['flex items-center', slotProps.option.id === '' ? 'text-gray-400 italic' : '']"
+                        >
+                            {{ slotProps.option.name }}
+                        </div>
+                        </template>
+                    </Select>
+                </div>
+                <div class="md:col-span-3">
+                    <label for="">Submodel</label>
+                    <Select
+                        v-model="submodel_id"
+                        :options="[{ name: '--- กรุณาเลือก ---', id: '' }, ...carsubmodellist]"
+                        filter
+                        optionLabel="name"
+                        optionValue="id"
+                        placeholder="--- กรุณาเลือก ---"
+                        class="w-full"
+                        @change="getCarSubModels"
+                        :pt="{
+                        root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
+                        trigger: { class: 'h-8 px-2' },
+                        label:   { class: 'text-sm leading-none px-2' },
+                        panel:   { class: 'bg-white dark:bg-[#232323] text-sm' },
+                        item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
+                        }"
+                    >
+                        <!-- ปรับแต่ง option -->
+                        <template #option="slotProps">
+                        <div
+                            :class="['flex items-center', slotProps.option.id === '' ? 'text-gray-400 italic' : '']"
+                        >
+                            {{ slotProps.option.name }}
+                        </div>
+                        </template>
+                    </Select>
+
+                </div>
+                <div class="md:col-span-3">
+                    <label for="">Year</label>
+                    <Select
+                        :options="['--- กรุณาเลือก ---']"
+                        filter
+                        optionLabel=""
+                        optionValue=""
+                        placeholder="--- กรุณาเลือก ---"
+                        class="w-full"
+                        :pt="{
+                        root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
+                        trigger: { class: 'h-8 px-2' },
+                        label:   { class: 'text-sm leading-none px-2' },
+                        panel:   { class: 'bg-white dark:bg-[#232323] text-sm' },
+                        item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
+                        }"
+                    >
+                        <!-- ปรับแต่ง option -->
+                        <template>
+                        <div class="flex items-center"
+                        >
+                        </div>
+                        </template>
+                    </Select>
+                </div>
+            </div>
+
+            <ul class="pt-2.5 mt-5 space-y-2 font-medium border-t-2 border-gray-200 dark:border-gray-700 relative"></ul>
+
+            <div class="grid gap-4 gap-y-2 text-sm grid-cols-1 md:grid-cols-6">
+                <div class="md:col-span-3">
                     <label for="txt_table" class="block text-sm mb-1">จังหวัง</label>
-                    <Select 
-                        v-model="txtTable" 
-                        :options="tables" 
-                        filter 
+                    <Select
+                        v-model="txtTable"
+                        :options="[{ label: '--- กรุณาเลือก ---', value: '' }, ...tables]"
+                        filter
                         optionLabel="label"
-                        optionValue="value" 
-                        placeholder="--- กรุณาเลือก ---" 
+                        optionValue="value"
+                        placeholder="--- กรุณาเลือก ---"
                         class="w-full"
                         :pt="{
                             root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
@@ -223,7 +453,7 @@ function clearCurrentTableOrders() {
                             item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
                         }"
                     >
-                        
+
                         <template #option="slotProps">
                             <div class="flex items-center">
                                 <div>{{ slotProps.option.label }}</div>
@@ -233,13 +463,13 @@ function clearCurrentTableOrders() {
                 </div>
                 <div class="md:col-span-3" >
                     <label for="txt_table" class="block text-sm mb-1">อำเภอ</label>
-                    <Select 
-                        v-model="txtTable" 
-                        :options="tables" 
-                        filter 
+                    <Select
+                        v-model="txtTable"
+                        :options="tables"
+                        filter
                         optionLabel="label"
-                        optionValue="value" 
-                        placeholder="--- กรุณาเลือก ---" 
+                        optionValue="value"
+                        placeholder="--- กรุณาเลือก ---"
                         class="w-full"
                         :pt="{
                             root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
@@ -249,7 +479,7 @@ function clearCurrentTableOrders() {
                             item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
                         }"
                     >
-                        
+
                         <template #option="slotProps">
                             <div class="flex items-center">
                                 <div>{{ slotProps.option.label }}</div>
@@ -259,13 +489,13 @@ function clearCurrentTableOrders() {
                 </div>
                 <div class="md:col-span-3" >
                     <label for="txt_table" class="block text-sm mb-1">ตำบล</label>
-                    <Select 
-                        v-model="txtTable" 
-                        :options="tables" 
-                        filter 
+                    <Select
+                        v-model="txtTable"
+                        :options="tables"
+                        filter
                         optionLabel="label"
-                        optionValue="value" 
-                        placeholder="--- กรุณาเลือก ---" 
+                        optionValue="value"
+                        placeholder="--- กรุณาเลือก ---"
                         class="w-full"
                         :pt="{
                             root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
@@ -275,7 +505,7 @@ function clearCurrentTableOrders() {
                             item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
                         }"
                     >
-                        
+
                         <template #option="slotProps">
                             <div class="flex items-center">
                                 <div>{{ slotProps.option.label }}</div>
@@ -336,13 +566,13 @@ function clearCurrentTableOrders() {
                                                                 </div>
                                                                 <div class="md:col-span-3" >
                                                                     <label for="txt_table" class="block text-sm mb-1">Table</label>
-                                                                    <Select 
-                                                                        v-model="txtTable" 
-                                                                        :options="tables" 
-                                                                        filter 
+                                                                    <Select
+                                                                        v-model="txtTable"
+                                                                        :options="tables"
+                                                                        filter
                                                                         optionLabel="label"
-                                                                        optionValue="value" 
-                                                                        placeholder="--- กรุณาเลือก ---" 
+                                                                        optionValue="value"
+                                                                        placeholder="--- กรุณาเลือก ---"
                                                                         class="w-full"
                                                                         :pt="{
                                                                             root:    { class: 'select-root rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-[#303030]' },
@@ -352,7 +582,7 @@ function clearCurrentTableOrders() {
                                                                             item:    { class: 'px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-[#2e2e2e]' }
                                                                         }"
                                                                         @change="handleTableChange">
-                                                                        
+
                                                                         <template #option="slotProps">
                                                                             <div class="flex items-center">
                                                                                 <div>{{ slotProps.option.label }}</div>
@@ -388,8 +618,8 @@ function clearCurrentTableOrders() {
                             <div class="md:col-span-3  mt-4">
                                 <div class="items-start">
                                     <button type="button" @click.prevent="sendOrdering" class="text-gray-100 bg-[#303030] hover:bg-[#404040] font-bold py-1 px-2 mr-2 cursor-pointer rounded group">
-                                        <svg fill="currentColor" class="size-5 hidden h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 md:inline-block" 
-                                            version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+                                        <svg fill="currentColor" class="size-5 hidden h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 md:inline-block"
+                                            version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
                                             viewBox="0 0 495.003 495.003" xml:space="preserve">
                                             <g id="XMLID_51_">
                                                 <path id="XMLID_53_" d="M164.711,456.687c0,2.966,1.647,5.686,4.266,7.072c2.617,1.385,5.799,1.207,8.245-0.468l55.09-37.616
